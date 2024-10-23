@@ -66,109 +66,78 @@ def rename_unique(): # RENAME INVOICE WHIT UNIQUE NAME
         unique_name = generate_unique_name(invoice)
         os.rename(invoice, unique_name)
 
-def rename_invoice(invoice_type, name): # MAIN FUNCTION
-    type = invoice_type.lower()
+def rename_invoice(rfc): # MAIN FUNCTION
     invoice_dir = get_invoice()
     rename_done = {}
     
-    if type == "receive":
-        for invoice in invoice_dir:
-            text = get_content(invoice)
-            date = get_date(text)
-            rfcs = get_receptor_rfc(text)
-            print(rfcs)
-            rfcss = get_sender_rfc(text)
-            print(rfcss)
+    for invoice in invoice_dir:
+        text = get_content(invoice)
+        date = get_date(text)
+        receptor_rfc = get_receptor_rfc(text)
+        sender_rfc = get_sender_rfc(text)
+        receptor_name = get_receptor_name(text) 
+        sender_name = get_sender_name(text)
+        is_receptor = receptor_rfc == rfc.lower()
+        is_sender = sender_rfc == rfc.lower()
+
+        if is_receptor and not is_sender:
+            base_filename = f'Recibida {date} - {sender_name}'.upper()
+        elif is_sender and not is_receptor: 
+            base_filename = f'Emitiida {date} - {receptor_name}'.upper()
             
-            receptor = get_receptor_name(text) 
-            sender = get_sender_name(text)
-            is_right_person = receptor == name.lower()
+            # IF FIRST FILE
+            if base_filename not in rename_done:
+                os.rename(invoice, base_filename + extension)
+                rename_done.update({base_filename:[0]})
 
-            if(is_right_person):
-                base_filename = f'Recibida {date} - {sender}'.upper()
-
-                # IF FIRST FILE
-                if base_filename not in rename_done:
-                    os.rename(invoice, base_filename + extension)
-                    rename_done.update({base_filename:[0]})
-
-                # IF NOT FIRST FILE
-                elif base_filename in rename_done:
-                    next_num = rename_done[base_filename][-1] + 1
-                    next_name = f'{base_filename} - ({next_num}){extension}'
-                    os.rename(invoice, next_name)
-                    rename_done[base_filename].append(next_num)
-    elif type == "send":
-        print("OK")   
+            # IF NOT FIRST FILE
+            elif base_filename in rename_done:
+                next_num = rename_done[base_filename][-1] + 1
+                next_name = f'{base_filename} - ({next_num}){extension}'
+                os.rename(invoice, next_name)
+                rename_done[base_filename].append(next_num)
 
 
 # MAIN EXECUTION ----------------------------------------------------------------------------
 os.system("cls") # CLEAR SCREEN
 
-
-
-
-
-
-
-options_list = ["Recibidas", "Emitidas"] 
-    
 def select_folder():
+    global folder_path
     folder_path = filedialog.askdirectory()
     if folder_path:
         label_path.config(text=f"Ruta seleccionada: {folder_path}")
 
-def save_name():
-    name = entry_name.get()
-    if name:
-        label_name.config(text=f"Nombre: {name}")
-        
-def option_selected(event):
-    selected_option = option_var.get()
-    label_selected.config(text=f"Opción seleccionada: {selected_option}")
+def save_rfc():
+    global rfc
+    rfc = input_rfc.get()
+    if rfc:
+        label_rfc.config(text=f"RFC: {rfc}")
 
+
+# MAIN TKINTER
 root = tk.Tk()
 root.title("Seleccionar Carpeta")
-root.geometry('800x600')
+root.geometry('600x400')
 
-# Crear y posicionar un botón para seleccionar la carpeta
+# INPUT PATH
 dir_select_btn = tk.Button(root, text="Seleccionar Carpeta", command=select_folder)
 dir_select_btn.pack(pady=20)
 
-# Etiqueta para mostrar la ruta seleccionada
 label_path = tk.Label(root, text="Ruta seleccionada: ")
 label_path.pack()
 
-# Etiqueta y entrada para ingresar el nombre a guardar
-label_name = tk.Label(root, text="Ingrese el RFC de quien recibe:")
-label_name.pack(pady=10)
+# INPUT RFC
+label_rfc = tk.Label(root, text="Ingrese el RFC de quien recibe:")
+label_rfc.pack(pady=10)
 
-input_name = tk.Entry(root, width=30)
-input_name.pack()
+input_rfc = tk.Entry(root, width=30)
+input_rfc.pack()
 
-# Botón para guardar el nombre ingresado
-name_save_btn = tk.Button(root, text="Guardar Nombre", command=save_name)
-name_save_btn.pack(pady=10)
-
-# Variable para almacenar la opción seleccionada
-invoice_type = tk.StringVar(root)
-invoice_type.set(options_list[0])  # Opción por defecto
-
-# Crear el OptionMenu
-option_menu = tk.OptionMenu(root, option_var, *options_list, command=option_selected)
-option_menu.pack(pady=20)
-
-# Etiqueta para mostrar la opción seleccionada
-label_selected = tk.Label(root, text="Opción seleccionada: ")
-label_selected.pack()
-
-tk.OptionMenu(root, )
-
+save_rfc_btn = tk.Button(root, text="Seleccionar RFC", command=save_rfc)
+save_rfc_btn.pack(pady=20)
 
 root.mainloop()
 
 
-
-
 # rename_unique() # AVOID REPEATED NAMES
-# rename_invoice("receive", name)
+# rename_invoice(rfc)pg
